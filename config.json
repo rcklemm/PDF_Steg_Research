@@ -1,0 +1,226 @@
+[
+	{
+		"operator": "c",
+		"min_operands": 6,
+		"max_operands": 6,
+		"enabled": false,
+		"max_pct_per_operand": [1, 1, 1, 1, 1, 1]
+	},
+	{
+		"operator": "v",
+		"min_operands": 4,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [1, 1, 1, 1]
+	},
+	{
+		"operator": "y",
+		"min_operands": 4,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [1, 1, 1, 1]
+	},
+	{
+		"operator": "l",
+		"min_operands": 2,
+		"max_operands": 2,
+		"enabled": false,
+		"max_pct_per_operand": [0.05, 0.05]
+	},
+	{
+		"operator": "m",
+		"min_operands": 2,
+		"max_operands": 2,
+		"enabled": false,
+		"max_pct_per_operand": [0.05, 0.05]
+	},
+	{
+		"operator": "re",
+		"min_operands": 4,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [0.2, 0.2, 0.2, 0.2]
+	},
+	{
+		"operator": "cm",
+		"min_operands": 6,
+		"max_operands": 6,
+		"enabled": false,
+		"max_pct_per_operand": [0.1, 0.1, 0.1, 0.1, 0.05, 0.05]
+	},
+	{
+		"operator": "i",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [1]
+	},
+	{
+		"operator": "M",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [1]
+	},
+	{
+		"operator": "w",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [1]
+	},
+	{
+		"operator": "G",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [5]
+	},
+	{
+		"operator": "g",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [5]
+	},
+	
+	{
+		"operator": "K",
+		"min_operands": 4,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5, 5]
+	},
+	{
+		"operator": "k",
+		"min_operands": 4,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5, 5]
+	},
+	{
+		"operator": "RG",
+		"min_operands": 3,
+		"max_operands": 3,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5]
+	},
+	{
+		"operator": "rg",
+		"min_operands": 3,
+		"max_operands": 3,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5]
+	},
+	{
+		"operator": "sc",
+		"min_operands": 1,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5, 5]
+	},
+	{
+		"operator": "SC",
+		"min_operands": 1,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5, 5]
+	},
+	{
+		"operator": "scn",
+		"min_operands": 1,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5, 5]
+	},
+	{
+		"operator": "SCN",
+		"min_operands": 1,
+		"max_operands": 4,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5, 5]
+	},
+	{
+		"operator": "Tc",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [1]
+	},
+	{
+		"operator": "Td",
+		"min_operands": 2,
+		"max_operands": 2,
+		"enabled": false,
+		"max_pct_per_operand": [2, 2]
+	},
+	{
+		"operator": "TD",
+		"min_operands": 2,
+		"max_operands": 2,
+		"enabled": false,
+		"max_pct_per_operand": [2, 2]
+	},
+	{
+		"operator": "Tf",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [0.5]
+	},
+	{
+		"operator": "TL",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [2]
+	},
+	{
+		"operator": "Tm",
+		"min_operands": 6,
+		"max_operands": 6,
+		"enabled": false,
+		"max_pct_per_operand": [5, 5, 5, 5, 2, 2]
+	},
+	{
+		"operator": "Ts",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [5]
+	},
+	{
+		"operator": "Tw",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [1]
+	},
+	{
+		"operator": "Tz",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [0.5]
+	},
+	{
+		"operator": "TJ",
+		"min_operands": 0,
+		"enabled": true,
+		"max_pct_per_operand": [20]
+	},
+	{
+		"operator": "d0",
+		"min_operands": 1,
+		"max_operands": 1,
+		"enabled": false,
+		"max_pct_per_operand": [1]
+	},
+	{
+		"operator": "d1",
+		"min_operands": 5,
+		"max_operands": 5,
+		"enabled": false,
+		"max_pct_per_operand": [1, 1, 1, 1, 1]
+	}
+]
