@@ -154,9 +154,9 @@ for op in config:
     if not op["enabled"]:
         continue
     if op["operator"] != "TJ":
-        operators.append(Operator(op["operator"], op["min_operands"], op["max_operands"], op["max_pct_per_operand"], 1))
+        operators.append(Operator(op["operator"], op["min_operands"], op["max_operands"], op["max_pct_per_operand"], 3))
     else:
-        operators.append(TJ_Operator(op["operator"], op["max_pct_per_operand"][0], 1))
+        operators.append(TJ_Operator(op["operator"], op["max_pct_per_operand"][0], 3))
     
     
 def find_all_streams(in_file):
@@ -303,7 +303,7 @@ def stat(in_file):
         text = s.text
         matches = collect_all_matches(text)
         for m in matches:
-            number_count = len(m[1].regex_number_capture.findall(text[m[0][0]:m[0][1]]))
+            number_count = m[1].bits_per_operand * len(m[1].regex_number_capture.findall(text[m[0][0]:m[0][1]]))
             numbits += number_count
     
     # 4 bytes reserved for size info
