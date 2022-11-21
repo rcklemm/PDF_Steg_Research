@@ -23,7 +23,7 @@ class Operator:
         self.regex_number_capture = nums_regex
         
         self.pattern = re.compile(b"(?:[\d\.\-]+\s+)" + b"{" + bytes(str(self.min_num_operands), 'ascii')
-            + b"," + bytes(str(self.max_num_operands), 'ascii') + b"}" + bytes(self.op_str, 'ascii') + b"\s")
+            + b"," + bytes(str(self.max_num_operands), 'ascii') + b"}" + bytes(self.op_str, 'ascii') + b"[\[\s]")
         
     def find_all(self, text):
         matches = [m for m in self.pattern.finditer(text)]
@@ -98,7 +98,7 @@ def embed_bit(str_op: bytes, pct: float, n: int, bits: str):
     leading_zeroes = 0
     if floating_point:
         for c in str_op.replace(b".", b""):
-            if c == '0':
+            if c == ord('0'):
                 leading_zeroes += 1
             else:
                 break
@@ -227,7 +227,7 @@ def embed(in_file, out_file, msg):
     newstreams = []
     
     msgindex = 0
-    
+    bytes_added = 0
     for s in streams:
         print(f"{msgindex//8} / {len(msgbits)//8} Embedded ({100*round(float(msgindex)/len(msgbits), 2)}%)")
         text = s.text
@@ -248,6 +248,7 @@ def embed(in_file, out_file, msg):
             
             bits = msgbits[msgindex:]
             replacement, bits_hidden = m[1].embed(text[m[0][0]:m[0][1]], bits)
+            bytes_added += len(replacement) - (m[0][1] - m[0][0])
             msgindex += bits_hidden
             newtext += replacement
             
@@ -257,7 +258,7 @@ def embed(in_file, out_file, msg):
         
         newstreams.append(newtext)
         
-        
+    print(f"Added {bytes_added} more bytes")
     # Assemble the output PDF
     fileindex = 0
 

@@ -83,13 +83,11 @@ sequences["TJ"] = []
 brackets = re.compile("\[.+?\]")
 
 for o in operators.keys():
-    regex[o] = [re.compile("(?:[0-9\.-]+\s+)" + "{" + str(operators[o][0]) + "," + str(operators[o][1]) + "}" + o + "\s"), 0]
+    regex[o] = [re.compile("\s(?:[0-9\.-]+\s+)" + "{" + str(operators[o][0]) + "," + str(operators[o][1]) + "}" + o + "\s"), 0]
 
 
-tj_reg = re.compile("\[.+?\]\s+?TJ")
+tj_reg = re.compile("\[.+?\]\s*?TJ")
 tj_count = 0
-
-nums = re.compile("[0-9\.-]+")
 
 for t in streams:
     text = t.text.decode("utf-8", errors="ignore")

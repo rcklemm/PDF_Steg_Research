@@ -64,7 +64,7 @@ def format_extracted(extracted: int, n: int):
     return "{0:b}".format(extracted).zfill(n)
 
 nums = re.compile("[\d\.\-]+")
-tj_nums = re.compile("[\d\.\-]+(?![^\(]*\))")
+tj_nums = re.compile("[\d\.\-]+(?![^\(]*\))(?![^\<]*\>)")
 
 if len(sys.argv) < 2:
     print(f"Usage: python {sys.argv[0]} <json_file>")
@@ -121,7 +121,7 @@ for b in range(1, 9):
         for num in n:
             extracted_bits = extract_bit(num, num_bits_per_operand)
             to_embed = format_extracted( (~extracted_bits) & int("1"*num_bits_per_operand, 2), num_bits_per_operand)
-            after_embed = embed_bit(num, float('inf'), num_bits_per_operand, to_embed)
+            after_embed = embed_bit(num, .2, num_bits_per_operand, to_embed)
             size_diff = len(after_embed) - len(num)
             total_size_diff += size_diff
             total_bits_embedded += num_bits_per_operand

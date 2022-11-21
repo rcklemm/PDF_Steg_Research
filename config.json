@@ -144,35 +144,35 @@
 		"operator": "Tc",
 		"min_operands": 1,
 		"max_operands": 1,
-		"enabled": false,
+		"enabled": true,
 		"max_pct_per_operand": [1]
 	},
 	{
 		"operator": "Td",
 		"min_operands": 2,
 		"max_operands": 2,
-		"enabled": false,
+		"enabled": true,
 		"max_pct_per_operand": [2, 2]
 	},
 	{
 		"operator": "TD",
 		"min_operands": 2,
 		"max_operands": 2,
-		"enabled": false,
+		"enabled": true,
 		"max_pct_per_operand": [2, 2]
 	},
 	{
 		"operator": "Tf",
 		"min_operands": 1,
 		"max_operands": 1,
-		"enabled": false,
+		"enabled": true,
 		"max_pct_per_operand": [0.5]
 	},
 	{
 		"operator": "TL",
 		"min_operands": 1,
 		"max_operands": 1,
-		"enabled": false,
+		"enabled": true,
 		"max_pct_per_operand": [2]
 	},
 	{
@@ -186,28 +186,28 @@
 		"operator": "Ts",
 		"min_operands": 1,
 		"max_operands": 1,
-		"enabled": false,
+		"enabled": true,
 		"max_pct_per_operand": [5]
 	},
 	{
 		"operator": "Tw",
 		"min_operands": 1,
 		"max_operands": 1,
-		"enabled": false,
+		"enabled": true,
 		"max_pct_per_operand": [1]
 	},
 	{
 		"operator": "Tz",
 		"min_operands": 1,
 		"max_operands": 1,
-		"enabled": false,
+		"enabled": true,
 		"max_pct_per_operand": [0.5]
 	},
 	{
 		"operator": "TJ",
 		"min_operands": 0,
 		"enabled": true,
-		"max_pct_per_operand": [20]
+		"max_pct_per_operand": [15]
 	},
 	{
 		"operator": "d0",
