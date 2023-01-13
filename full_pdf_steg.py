@@ -2,18 +2,41 @@ import argparse
 import re
 import sys
 import json
+import string 
+
+import cProfile
+import pstats
+import io
+from pstats import SortKey
 
 nums_regex = re.compile(b"[\d\.\-]+")
 tj_nums_regex = re.compile(b"[\d\.\-]+(?![^\(]*\))(?![^\<]*\>)")
 
+# TODO: Fix bug in how the very last letter of the message is getting embedded or extracted incorrectly
+# TODO: Embedding velocity seems to strongly correlate with the size of the message being embedded -e.g. takes like 10 min to embed first 15KB of a 400KB message, but only takes 1 minute to embed just a 15KB message. Weird...
 class PdfStream:
     def __init__(self, start, end, text):
         self.start = start
         self.end = end
         self.text = text
+
+        # See how many of the chars are printable
+        printable = bytes(string.printable, 'ascii')
+        num_not_printable = 0
+        for t in self.text:
+            if t not in printable:
+                num_not_printable += 1
+
+        # Heuristic: 25%+ unprintable chars probably means this is an image or something that shouldn't be touched
+        # This isn't the best way of only grabbing streams that have operators, but it should work
+        pct_unprintable = 100 * (num_not_printable / len(text))
+        self.viable_stream = pct_unprintable < 25
+
+    def viable(self):
+        return self.viable_stream
         
 class Operator:
-    def __init__(self, op_str, min_num_operands, max_num_operands, max_pcts, bits_per_operand):
+    def __init__(self, op_str, min_num_operands, max_num_operands, max_pcts, bits_per_operand, min_value):
         global nums_regex
         self.op_str = op_str
         self.min_num_operands = min_num_operands
@@ -21,6 +44,7 @@ class Operator:
         self.max_pcts = max_pcts
         self.bits_per_operand = bits_per_operand
         self.regex_number_capture = nums_regex
+        self.min_value = min_value
         
         self.pattern = re.compile(b"(?:[\d\.\-]+\s+)" + b"{" + bytes(str(self.min_num_operands), 'ascii')
             + b"," + bytes(str(self.max_num_operands), 'ascii') + b"}" + bytes(self.op_str, 'ascii') + b"[\[\s]")
@@ -32,8 +56,10 @@ class Operator:
     def embed(self, match, bits):
         parts = [m for m in self.regex_number_capture.finditer(match)]
         parts = [(p.start(), p.end()) for p in parts]
+        total_num_bits = self.bits_per_operand * len(parts)
         
-        bit_pieces = [bits[i:i+self.bits_per_operand] for i in range(0, len(bits), self.bits_per_operand)]
+        # Problem Line
+        bit_pieces = [bits[i:i+self.bits_per_operand] for i in range(0, min(len(bits), total_num_bits), self.bits_per_operand)]
         replacement = b""
         match_index = 0
         part_index = 0
@@ -41,7 +67,7 @@ class Operator:
         for (p, b) in zip(parts, bit_pieces):
             replacement += match[match_index:p[0]]
             num = match[p[0]:p[1]]
-            replacement += embed_bit(num, self.max_pcts[part_index] / 100.0, self.bits_per_operand, b)
+            replacement += embed_bit(num, self.max_pcts[part_index] / 100.0, self.bits_per_operand, b, self.min_value)
             match_index = p[1]
             part_index += 1
             bits_hidden += len(b)
@@ -61,34 +87,49 @@ class Operator:
         return bits
 
 class TJ_Operator(Operator):
-    def __init__(self, op_str, max_pct, bits_per_operand):
+    def __init__(self, op_str, max_pct, bits_per_operand, min_value):
         global tj_nums_regex
         self.op_str = op_str
         self.max_pct = max_pct
         self.bits_per_operand = bits_per_operand
         self.regex_number_capture = tj_nums_regex
+        self.min_value = min_value
         
         self.pattern = re.compile(b"\[.+?\]\s*?TJ")
         
     def embed(self, match, bits):
-        parts = [m for m in self.regex_number_capture.finditer(match)]
+        parts = [m for m in self.regex_number_capture.finditer(match.replace(b"\(", b".."))]
         parts = [(p.start(), p.end()) for p in parts]
         
-        bit_pieces = [bits[i:i+self.bits_per_operand] for i in range(0, len(bits), self.bits_per_operand)]
+        total_num_bits = self.bits_per_operand * len(parts)
+        
+        # Problem Line
+        bit_pieces = [bits[i:i+self.bits_per_operand] for i in range(0, min(len(bits), total_num_bits), self.bits_per_operand)]
         replacement = b""
         match_index = 0
         bits_hidden = 0
         for (p, b) in zip(parts, bit_pieces):
             replacement += match[match_index:p[0]]
             num = match[p[0]:p[1]]
-            replacement += embed_bit(num, self.max_pct / 100.0, self.bits_per_operand, b)
+            replacement += embed_bit(num, self.max_pct / 100.0, self.bits_per_operand, b, self.min_value)
             match_index = p[1]
             bits_hidden += len(b)
         replacement += match[match_index:]
             
         return replacement, bits_hidden
+    
+    def extract(self, match):
+        parts = [m for m in self.regex_number_capture.finditer(match.replace(b"\(", b".."))]
+        parts = [(p.start(), p.end()) for p in parts]
 
-def embed_bit(str_op: bytes, pct: float, n: int, bits: str):
+        bits = ""
+        for p in parts:
+            num = match[p[0]:p[1]]
+            bits += format_extracted(extract_bit(num, self.bits_per_operand), self.bits_per_operand)
+
+        return bits
+
+def embed_bit(str_op: bytes, pct: float, n: int, bits: str, min_value: float):
     orig = str_op
     negative = b"-" in str_op
     floating_point = b"." in str_op
@@ -110,7 +151,15 @@ def embed_bit(str_op: bytes, pct: float, n: int, bits: str):
         
     # Special case for operator = 0
     if int_op == 0:
-        return b"0.0" + bytes(str(int(bits, 2)), 'ascii')
+        if int(bits, 2) <= min_value:
+            return bytes(str(int(bits, 2)), 'ascii')
+
+        num_zeroes = 0
+        while (True):
+            str_val = b"0." + (b"0"*num_zeroes) + bytes(str(int(bits,2)), 'ascii')
+            if float(str_val) <= min_value:
+                return str_val
+            num_zeroes += 1
     
     small_enough_change = False
     working_int_op = int_op
@@ -154,9 +203,9 @@ for op in config:
     if not op["enabled"]:
         continue
     if op["operator"] != "TJ":
-        operators.append(Operator(op["operator"], op["min_operands"], op["max_operands"], op["max_pct_per_operand"], 3))
+        operators.append(Operator(op["operator"], op["min_operands"], op["max_operands"], op["max_pct_per_operand"], 3, op["min_value"]))
     else:
-        operators.append(TJ_Operator(op["operator"], op["max_pct_per_operand"][0], 3))
+        operators.append(TJ_Operator(op["operator"], op["max_pct_per_operand"][0], 3, op["min_value"]))
     
     
 def find_all_streams(in_file):
@@ -167,7 +216,7 @@ def find_all_streams(in_file):
     end = 0
     streams = []
 
-    # Find all streams in the PDF file
+    # Find all streams in the PDF file that are likely to be text streams
     while True:
         try:
             start = filebytes.index(b'stream', start)
@@ -176,9 +225,13 @@ def find_all_streams(in_file):
             break
 
         if filebytes[(start+6):(start+8)] == b'\r\n':
-            streams.append(PdfStream(start + 8, end - 2, filebytes[(start+8):(end-2)]))
+            stream = PdfStream(start + 8, end - 2, filebytes[(start+8):(end-2)])
+            if stream.viable():
+                streams.append(PdfStream(start + 8, end - 2, filebytes[(start+8):(end-2)]))
         else:
-            streams.append(PdfStream(start + 7, end - 1, filebytes[(start+7):(end-1)]))
+            stream = PdfStream(start + 7, end - 1, filebytes[(start+7):(end-1)])
+            if stream.viable():
+                streams.append(PdfStream(start + 7, end - 1, filebytes[(start+7):(end-1)]))
         
         start = end + 9
     
@@ -229,7 +282,9 @@ def embed(in_file, out_file, msg):
     msgindex = 0
     bytes_added = 0
     for s in streams:
-        print(f"{msgindex//8} / {len(msgbits)//8} Embedded ({100*round(float(msgindex)/len(msgbits), 2)}%)")
+        #ob = cProfile.Profile()
+        #ob.enable()
+        print(f"{msgindex//8} / {len(msgbits)//8} Embedded ({100*round(float(msgindex)/len(msgbits), 4)}%)")
         text = s.text
 
         if msgindex >= len(msgbits):
@@ -247,7 +302,9 @@ def embed(in_file, out_file, msg):
             newtext += text[textindex:m[0][0]]
             
             bits = msgbits[msgindex:]
+            
             replacement, bits_hidden = m[1].embed(text[m[0][0]:m[0][1]], bits)
+            
             bytes_added += len(replacement) - (m[0][1] - m[0][0])
             msgindex += bits_hidden
             newtext += replacement
@@ -257,6 +314,13 @@ def embed(in_file, out_file, msg):
         newtext += text[textindex:]
         
         newstreams.append(newtext)
+        #ob.disable()
+        #sec = io.StringIO()
+        #sortby = SortKey.CUMULATIVE
+        #ps = pstats.Stats(ob, stream=sec).sort_stats(sortby)
+        #ps.print_stats()
+        
+        #print(sec.getvalue())
         
     print(f"Added {bytes_added} more bytes")
     # Assemble the output PDF
@@ -297,6 +361,8 @@ def extract(in_file, out_file):
    
 def stat(in_file):
     print("[+] Calculating Allowable Message Size")
+    ob = cProfile.Profile()
+    ob.enable()
     streams = find_all_streams(in_file)
     
     numbits = 0
@@ -310,6 +376,14 @@ def stat(in_file):
     # 4 bytes reserved for size info
     bytes_available = (numbits // 8) - 4
     print("[-] Message Size Calculated")
+    
+    ob.disable()
+    sec = io.StringIO()
+    sortby = SortKey.CUMULATIVE
+    ps = pstats.Stats(ob, stream=sec).sort_stats(sortby)
+    ps.print_stats()
+        
+    print(sec.getvalue())
     return bytes_available
     
     

@@ -81,7 +81,7 @@ op_json = json.load(file)
 
 operators = op_json.keys()
 
-for b in range(1, 9):
+for b in range(3, 4):
     total_size_diff = 0
     expected_size_diff = 0
     total_bits_embedded = 0
@@ -92,6 +92,8 @@ for b in range(1, 9):
             continue
         if c["operator"] == "TJ":
             continue
+        if c["operator"] != "Tm":
+            continue
                 
         for m in op_json[c["operator"]]:
             n = nums.findall(m)
@@ -100,6 +102,7 @@ for b in range(1, 9):
                 extracted_bits = extract_bit(num, num_bits_per_operand)
                 to_embed = format_extracted( (~extracted_bits) & int("1"*num_bits_per_operand, 2), num_bits_per_operand)
                 after_embed = embed_bit(num, c["max_pct_per_operand"][i] / 100.0, num_bits_per_operand, to_embed)
+                print(f"{num} -> {after_embed}")
                 size_diff = len(after_embed) - len(num)
                 total_size_diff += size_diff
                 total_bits_embedded += num_bits_per_operand
