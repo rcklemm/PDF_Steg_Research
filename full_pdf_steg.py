@@ -4,16 +4,9 @@ import sys
 import json
 import string 
 
-import cProfile
-import pstats
-import io
-from pstats import SortKey
-
 nums_regex = re.compile(b"[\d\.\-]+")
 tj_nums_regex = re.compile(b"[\d\.\-]+(?![^\(]*\))(?![^\<]*\>)")
 
-# TODO: Fix bug in how the very last letter of the message is getting embedded or extracted incorrectly
-# TODO: Embedding velocity seems to strongly correlate with the size of the message being embedded -e.g. takes like 10 min to embed first 15KB of a 400KB message, but only takes 1 minute to embed just a 15KB message. Weird...
 class PdfStream:
     def __init__(self, start, end, text):
         self.start = start
@@ -27,8 +20,7 @@ class PdfStream:
             if t not in printable:
                 num_not_printable += 1
 
-        # Heuristic: 25%+ unprintable chars probably means this is an image or something that shouldn't be touched
-        # This isn't the best way of only grabbing streams that have operators, but it should work
+        # Heuristic: 25%+ unprintable chars is a good heuristic to tell that this is not an operator stream 
         pct_unprintable = 100 * (num_not_printable / len(text))
         self.viable_stream = pct_unprintable < 25
 
@@ -266,7 +258,7 @@ def embed(in_file, out_file, msg):
     # Append 4-byte size to message, then embed message
     maxsize = stat(in_file)
     size = len(msg)
-    
+    print(f"Size of message: {size}")
     if size > maxsize:
         print(f"Message of length {size} exceeds capacity {maxsize}")
         exit(1)
@@ -282,9 +274,6 @@ def embed(in_file, out_file, msg):
     msgindex = 0
     bytes_added = 0
     for s in streams:
-        #ob = cProfile.Profile()
-        #ob.enable()
-        print(f"{msgindex//8} / {len(msgbits)//8} Embedded ({100*round(float(msgindex)/len(msgbits), 4)}%)")
         text = s.text
 
         if msgindex >= len(msgbits):
@@ -314,13 +303,8 @@ def embed(in_file, out_file, msg):
         newtext += text[textindex:]
         
         newstreams.append(newtext)
-        #ob.disable()
-        #sec = io.StringIO()
-        #sortby = SortKey.CUMULATIVE
-        #ps = pstats.Stats(ob, stream=sec).sort_stats(sortby)
-        #ps.print_stats()
         
-        #print(sec.getvalue())
+        print(f"{msgindex//8} / {len(msgbits)//8} Embedded ({100*round(float(msgindex)/len(msgbits), 4)}%)")
         
     print(f"Added {bytes_added} more bytes")
     # Assemble the output PDF
@@ -352,7 +336,8 @@ def extract(in_file, out_file):
 
     sizebytes = bits_to_msg(sizebits)
     size = int.from_bytes(sizebytes, byteorder='big')
-    
+    print(f"Size of extracted message: {size}")
+
     relevant_msg_bits = msg_bits[32:32+(size*8)]
     msg = bits_to_msg(relevant_msg_bits)
     out_file.write(msg)
@@ -361,8 +346,6 @@ def extract(in_file, out_file):
    
 def stat(in_file):
     print("[+] Calculating Allowable Message Size")
-    ob = cProfile.Profile()
-    ob.enable()
     streams = find_all_streams(in_file)
     
     numbits = 0
@@ -377,13 +360,6 @@ def stat(in_file):
     bytes_available = (numbits // 8) - 4
     print("[-] Message Size Calculated")
     
-    ob.disable()
-    sec = io.StringIO()
-    sortby = SortKey.CUMULATIVE
-    ps = pstats.Stats(ob, stream=sec).sort_stats(sortby)
-    ps.print_stats()
-        
-    print(sec.getvalue())
     return bytes_available
     
     
